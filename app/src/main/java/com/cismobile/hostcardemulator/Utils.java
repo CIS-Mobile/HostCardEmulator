@@ -1,5 +1,7 @@
 package com.cismobile.hostcardemulator;
 
+import java.util.Arrays;
+
 public final class Utils {
    // ISO-DEP command HEADER for selecting an AID.
    // Format: [Class | Instruction | Parameter 1 | Parameter 2]
@@ -55,5 +57,25 @@ public final class Utils {
                  + Character.digit(s.charAt(i+1), 16));
       }
       return data;
+   }
+
+   /**
+    * Utility method to concatenate two byte arrays.
+    * @param first First array
+    * @param rest Any remaining arrays
+    * @return Concatenated copy of input arrays
+    */
+   public static byte[] ConcatArrays(byte[] first, byte[]... rest) {
+      int totalLength = first.length;
+      for (byte[] array : rest) {
+         totalLength += array.length;
+      }
+      byte[] result = Arrays.copyOf(first, totalLength);
+      int offset = first.length;
+      for (byte[] array : rest) {
+         System.arraycopy(array, 0, result, offset, array.length);
+         offset += array.length;
+      }
+      return result;
    }
 }

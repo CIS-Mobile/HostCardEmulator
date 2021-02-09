@@ -72,7 +72,10 @@ public final class HostCardEmulatorService extends HostApduService {
               ? Utils.HexStringToByteArray(STATUS_SUCCESS)
               : Utils.HexStringToByteArray(STATUS_FAILED);
        */
-      return Utils.HexStringToByteArray(STATUS_SUCCESS);
+
+      String dataToSend = "test";
+      byte[] dataBytes = dataToSend.getBytes();
+      return Utils.ConcatArrays(dataBytes, Utils.HexStringToByteArray(STATUS_SUCCESS));
    }
 }
 
