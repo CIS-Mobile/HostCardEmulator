@@ -1,8 +1,11 @@
 package com.cismobile.hostcardemulator;
 
+import android.content.Intent;
 import android.nfc.cardemulation.HostApduService;
 import android.os.Bundle;
 import android.util.Log;
+
+import java.util.Arrays;
 
 public final class HostCardEmulatorService extends HostApduService {
    private static final String TAG = "Host Card Emulator";
@@ -15,6 +18,13 @@ public final class HostCardEmulatorService extends HostApduService {
    private static final String SELECT_INS = "A4";
    private static final String DEFAULT_CLA = "00";
    private static final int MIN_APDU_LENGTH = 12;
+
+   private static final byte[] SELECT_APDU = Utils.BuildSelectApdu(AID);
+
+   public void launchScreen() {
+      Intent intent = new Intent(this, MainActivity.class);
+      startActivity(intent);
+   }
 
    /**
     * Called if the connection to the NFC card is lost, in order to let the application know the
@@ -49,29 +59,35 @@ public final class HostCardEmulatorService extends HostApduService {
     */
    @Override
    public byte[] processCommandApdu(byte[] commandApdu, Bundle extras) {
+      launchScreen();
       if (commandApdu == null) {
          // The APDU can't be empty
+         Log.d(TAG, "APDU is empty");
          return Utils.HexStringToByteArray(STATUS_FAILED);
       }
 
       String hexCommandApdu = Utils.ByteArrayToHexString(commandApdu);
       if (hexCommandApdu.length() < MIN_APDU_LENGTH) {
-        return Utils.HexStringToByteArray(STATUS_FAILED);
+         Log.d(TAG, "APDU is malformed - too short");
+         return Utils.HexStringToByteArray(STATUS_FAILED);
       }
 
       /* TODO: Fix this sanity check, its causing a failure apparently
       if ((hexCommandApdu.substring(0, 2)).equals(DEFAULT_CLA)) {
+         Log.d(TAG, "APDU is malformed - CLA is not supported");
          return Utils.HexStringToByteArray(CLA_NOT_SUPPORTED);
       }
 
       if ((hexCommandApdu.substring(2, 4)).equals(SELECT_INS)) {
+         Log.d(TAG, "APDU is malformed - IMS is not supported");
          return Utils.HexStringToByteArray(INS_NOT_SUPPORTED);
       }
-
-      return hexCommandApdu.substring(10, 24).equals(AID)
-              ? Utils.HexStringToByteArray(STATUS_SUCCESS)
-              : Utils.HexStringToByteArray(STATUS_FAILED);
        */
+
+      if (!Arrays.equals(SELECT_APDU, commandApdu)) {
+         Log.d(TAG, "APDU does not match expected command");
+         return Utils.HexStringToByteArray(STATUS_FAILED);
+      }
 
       String dataToSend = "test";
       byte[] dataBytes = dataToSend.getBytes();
