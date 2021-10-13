@@ -19,7 +19,7 @@ public final class HostCardEmulatorService extends HostApduService {
    private static final String SELECT_INS = "A4";
    private static final String GET_DATA_INS = "CB";
    private static final String DEFAULT_CLA = "00";
-   private static final int MIN_APDU_LENGTH = 12;
+   private static final int MIN_APDU_LENGTH = 8;
 
    private static final byte[] SELECT_APDU = Utils.BuildSelectApdu(AID);
 
