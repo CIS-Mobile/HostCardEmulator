@@ -12,10 +12,12 @@ public final class HostCardEmulatorService extends HostApduService {
 
    private static final String STATUS_SUCCESS = "9000";
    private static final String STATUS_FAILED = "6F00";
+   private static final String STATUS_NO_APP = "6A82";
    private static final String CLA_NOT_SUPPORTED = "6E00";
    private static final String INS_NOT_SUPPORTED = "6D00";
    private static final String AID = "A0000002471001";
    private static final String SELECT_INS = "A4";
+   private static final String GET_DATA_INS = "CB";
    private static final String DEFAULT_CLA = "00";
    private static final int MIN_APDU_LENGTH = 12;
 
@@ -59,6 +61,8 @@ public final class HostCardEmulatorService extends HostApduService {
     */
    @Override
    public byte[] processCommandApdu(byte[] commandApdu, Bundle extras) {
+      byte[] returnBytes = new byte[65538];
+
       launchScreen();
       if (commandApdu == null) {
          // The APDU can't be empty
@@ -72,26 +76,34 @@ public final class HostCardEmulatorService extends HostApduService {
          return Utils.HexStringToByteArray(STATUS_FAILED);
       }
 
-      /* TODO: Fix this sanity check, its causing a failure apparently
-      if ((hexCommandApdu.substring(0, 2)).equals(DEFAULT_CLA)) {
-         Log.d(TAG, "APDU is malformed - CLA is not supported");
+      if (!(hexCommandApdu.substring(0, 2)).equals(DEFAULT_CLA)) {
+         Log.d(TAG, "APDU is malformed - CLA is not supported: " + hexCommandApdu.substring(0, 2));
          return Utils.HexStringToByteArray(CLA_NOT_SUPPORTED);
       }
 
-      if ((hexCommandApdu.substring(2, 4)).equals(SELECT_INS)) {
-         Log.d(TAG, "APDU is malformed - IMS is not supported");
+      if (!(hexCommandApdu.substring(2, 4)).equals(SELECT_INS) &&
+            !(hexCommandApdu.substring(2, 4)).equals(GET_DATA_INS)) {
+         Log.d(TAG, "APDU is malformed - INS is not supported: " + hexCommandApdu.substring(2, 4));
          return Utils.HexStringToByteArray(INS_NOT_SUPPORTED);
       }
-       */
 
-      if (!Arrays.equals(SELECT_APDU, commandApdu)) {
-         Log.d(TAG, "APDU does not match expected command");
-         return Utils.HexStringToByteArray(STATUS_FAILED);
+      if ((hexCommandApdu.substring(2, 4)).equals(SELECT_INS)) {
+         if (!Arrays.equals(SELECT_APDU, commandApdu)) {
+            Log.d(TAG, "APDU does not match expected command: " + hexCommandApdu);
+            Log.d(TAG, "No matching AID found");
+            return Utils.HexStringToByteArray(STATUS_NO_APP);
+         }
+         String dataToSend = "test";
+         byte[] dataBytes = dataToSend.getBytes();
+         returnBytes =  Utils.ConcatArrays(dataBytes, Utils.HexStringToByteArray(STATUS_SUCCESS));
       }
 
-      String dataToSend = "test";
-      byte[] dataBytes = dataToSend.getBytes();
-      return Utils.ConcatArrays(dataBytes, Utils.HexStringToByteArray(STATUS_SUCCESS));
+      if ((hexCommandApdu.substring(2, 4)).equals(GET_DATA_INS)) {
+         String dataToSend = "test";
+         byte[] dataBytes = dataToSend.getBytes();
+         returnBytes =  Utils.ConcatArrays(dataBytes, Utils.HexStringToByteArray(STATUS_SUCCESS));
+      }
+      return returnBytes;
    }
 }
 
